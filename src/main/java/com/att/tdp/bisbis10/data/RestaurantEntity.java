@@ -24,7 +24,7 @@ public class RestaurantEntity {
 
 	private String name;
 
-	private BigDecimal rating;
+	private BigDecimal averageRating;
 
 	@Column(name = "is_kosher") // for naming conventions
 	private Boolean isKosher;
@@ -40,7 +40,7 @@ public class RestaurantEntity {
 	public RestaurantEntity(Long id, String name, BigDecimal rating, Boolean isKosher) {
 		this.id = id;
 		this.name = name;
-		this.rating = rating;
+		this.averageRating = rating;
 		this.isKosher = isKosher;
 	}
 
@@ -60,12 +60,12 @@ public class RestaurantEntity {
 		this.name = name;
 	}
 
-	public BigDecimal getRating() {
-		return rating;
+	public BigDecimal getAverageRating() {
+		return averageRating;
 	}
 
-	public void setRating(BigDecimal rating) {
-		this.rating = rating;
+	public void setAverageRating(BigDecimal averageRating) {
+		this.averageRating = averageRating;
 	}
 
 	public Boolean isKosher() {

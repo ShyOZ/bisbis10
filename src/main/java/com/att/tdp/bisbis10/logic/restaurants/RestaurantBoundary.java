@@ -14,7 +14,7 @@ public class RestaurantBoundary {
 
 	private String name;
 
-	private BigDecimal rating;
+	private BigDecimal averageRating;
 
 	@JsonProperty("isKosher")
 	private Boolean isKosher;
@@ -29,7 +29,7 @@ public class RestaurantBoundary {
 	public RestaurantBoundary(Long id, String name, BigDecimal rating, Boolean isKosher, List<String> cuisines) {
 		this.id = id;
 		this.name = name;
-		this.rating = rating;
+		this.averageRating = rating;
 		this.isKosher = isKosher;
 		this.cuisines = cuisines;
 		this.dishes = null;
@@ -51,12 +51,12 @@ public class RestaurantBoundary {
 		this.name = name;
 	}
 
-	public BigDecimal getRating() {
-		return rating;
+	public BigDecimal getAverageRating() {
+		return averageRating;
 	}
 
-	public void setRating(BigDecimal rating) {
-		this.rating = rating;
+	public void setAverageRating(BigDecimal averageRating) {
+		this.averageRating = averageRating;
 	}
 
 	@JsonProperty("isKosher")
