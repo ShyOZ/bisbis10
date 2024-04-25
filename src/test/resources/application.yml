@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: bisbis10
+  datasource:
+    url: jdbc:h2:mem:test_db;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driverClassName: org.h2.Driver
+    username: bisbis10
+    password: bisbis10
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+  sql:
+    init:
+      platform: postgres
+      mode: always
