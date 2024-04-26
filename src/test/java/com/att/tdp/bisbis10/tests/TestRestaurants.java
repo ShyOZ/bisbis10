@@ -9,11 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.stream.LongStream;
 
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.att.tdp.bisbis10.data.CuisineEntity;
 import com.att.tdp.bisbis10.data.RestaurantEntity;
 import com.att.tdp.bisbis10.logic.restaurants.RestaurantBoundary;
 import com.att.tdp.bisbis10.utility.ConfigureComplexTest;
@@ -51,7 +50,8 @@ public class TestRestaurants {
 		RestaurantEntity expectedRestaurant = new RestaurantEntity(createdRestaurantId, "restaurant", null, true);
 		expectedRestaurant.setCuisines(Set.of());
 
-		assertThat(actualRestaurant).usingRecursiveComparison().isEqualTo(expectedRestaurant);
+		assertThat(actualRestaurant).usingRecursiveComparison().ignoringExpectedNullFields()
+				.isEqualTo(expectedRestaurant);
 	}
 
 	@Test
@@ -78,11 +78,6 @@ public class TestRestaurants {
 	@Test
 	void testUpdateRestaurant(TestHelper helper) throws JsonProcessingException, Exception {
 		List<String> cuisines = List.of("a", "b", "c");
-		cuisines.forEach(cuisine -> {
-			CuisineEntity ent = new CuisineEntity();
-			ent.setName(cuisine);
-			helper.cuisineRepository.save(ent);
-		});
 
 		RestaurantBoundary original = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
 		mockMvc.perform(helper.requester.postRestaurant(original));
@@ -103,7 +98,9 @@ public class TestRestaurants {
 				.orElseGet(() -> fail("failed to find restaurant with id %li / restaurant was not created properly!"
 						.formatted(createdRestaurantId)));
 
-		assertThat(actualUpdatedRestaurant).usingRecursiveComparison().ignoringFields("cuisines.restaurants")
+		assertThat(actualUpdatedRestaurant)
+				.usingRecursiveComparison(RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true)
+						.withIgnoredFields("cuisines.restaurants", "ratings").build())
 				.isEqualTo(expectedUpdatedRestaurant);
 	}
 
@@ -123,11 +120,11 @@ public class TestRestaurants {
 			RestaurantEntity rest = new RestaurantEntity(i, "restaurant" + i, null, true);
 			rest.setCuisines(Set.of());
 			return rest;
-		}).collect(Collectors.toList());
+		}).toList();
 
 		List<RestaurantEntity> actualRestaurantList = helper.restaurantRepository.findAll();
 
-		assertThat(actualRestaurantList).usingRecursiveFieldByFieldElementComparator()
+		assertThat(actualRestaurantList).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ratings")
 				.containsExactlyInAnyOrderElementsOf(expectedRestaurantList);
 	}
 
@@ -135,11 +132,6 @@ public class TestRestaurants {
 	void testGetAllRestaurantsAndGetAllRestaurantsByCuisine(TestHelper helper)
 			throws JsonProcessingException, Exception {
 		List<String> cuisines = List.of("a", "b", "c");
-		cuisines.forEach(cuisine -> {
-			CuisineEntity ent = new CuisineEntity();
-			ent.setName(cuisine);
-			helper.cuisineRepository.save(ent);
-		});
 
 		RestaurantBoundary restABC = new RestaurantBoundary(1l, "restaurantABC", null, true, cuisines);
 
@@ -164,8 +156,38 @@ public class TestRestaurants {
 			RestaurantBoundary[] actualList = helper.mapper.readValue(result.getResponse().getContentAsString(),
 					RestaurantBoundary[].class);
 
-			assertThat(actualList).usingRecursiveFieldByFieldElementComparator()
+			assertThat(actualList)
+					.usingRecursiveFieldByFieldElementComparator(
+							RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true).build())
 					.containsExactlyInAnyOrderElementsOf(entry.getValue());
 		}
+	}
+
+	@Test
+	void testDeleteRestaurantDoesNotDeleteCuisines(TestHelper helper) throws JsonProcessingException, Exception {
+		List<String> cuisines = List.of("a", "b", "c");
+
+		RestaurantBoundary restaurant = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
+
+		mockMvc.perform(helper.requester.postRestaurant(restaurant));
+
+		helper.restaurantRepository.deleteAll();
+
+		List<String> actualCuisines = helper.cuisineRepository.findAll().stream()
+				.map(cuisineEntity -> cuisineEntity.getName()).toList();
+
+		assertThat(actualCuisines).containsExactlyInAnyOrderElementsOf(cuisines);
+	}
+
+	@Test
+	void testAddRestaurantAlsoAddsCuisines(TestHelper helper) throws JsonProcessingException, Exception {
+		List<String> cuisines = List.of("a", "b", "c");
+		RestaurantBoundary restaurant = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
+		mockMvc.perform(helper.requester.postRestaurant(restaurant));
+
+		List<String> actualCuisines = helper.cuisineRepository.findAll().stream()
+				.map(cuisineEntity -> cuisineEntity.getName()).toList();
+
+		assertThat(actualCuisines).containsExactlyInAnyOrderElementsOf(cuisines);
 	}
 }

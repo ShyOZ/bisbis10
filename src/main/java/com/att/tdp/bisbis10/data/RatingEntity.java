@@ -25,12 +25,6 @@ public class RatingEntity {
 	public RatingEntity() {
 	}
 
-	public RatingEntity(Long id, RestaurantEntity restaurant, BigDecimal rating) {
-		this.id = id;
-		this.restaurant = restaurant;
-		this.rating = rating;
-	}
-
 	public Long getId() {
 		return id;
 	}

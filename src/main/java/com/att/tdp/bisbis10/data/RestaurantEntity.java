@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
@@ -25,6 +26,9 @@ public class RestaurantEntity {
 	private String name;
 
 	private BigDecimal averageRating;
+
+	@OneToMany(fetch = FetchType.EAGER, mappedBy = "restaurant", orphanRemoval = true)
+	private Set<RatingEntity> ratings;
 
 	@Column(name = "is_kosher") // for naming conventions
 	private Boolean isKosher;

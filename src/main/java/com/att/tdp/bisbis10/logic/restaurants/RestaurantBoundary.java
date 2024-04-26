@@ -83,4 +83,10 @@ public class RestaurantBoundary {
 	public void setDishes(List<DishBoundary> dishes) {
 		this.dishes = dishes;
 	}
+
+	@Override
+	public String toString() {
+		return "RestaurantBoundary [id=" + id + ", name=" + name + ", averageRating=" + averageRating + ", isKosher="
+				+ isKosher + ", cuisines=" + cuisines + ", dishes=" + dishes + "]";
+	}
 }

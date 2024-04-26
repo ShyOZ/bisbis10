@@ -24,7 +24,7 @@ public class RestaurantServiceJPA implements RestaurantsService {
 
 	@Override
 	public List<RestaurantBoundary> getAllRestaurants() {
-		return restaurantRepository.findAll().stream().map(converter::toBoundary).collect(Collectors.toList());
+		return restaurantRepository.findAll().stream().map(converter::toBoundary).toList();
 	}
 
 	@Override
@@ -33,7 +33,7 @@ public class RestaurantServiceJPA implements RestaurantsService {
 			CuisineEntity emptyEntity = new CuisineEntity();
 			emptyEntity.setRestaurants(Set.of());
 			return emptyEntity;
-		}).getRestaurants().stream().map(converter::toBoundary).collect(Collectors.toList());
+		}).getRestaurants().stream().map(converter::toBoundary).toList();
 
 		restaurants.sort((restaurant1, restaurant2) -> Long.compare(restaurant1.getId(), restaurant2.getId()));
 
