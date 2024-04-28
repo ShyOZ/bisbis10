@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class RatingBoundary {
 	private Long restaurantId;
 	private BigDecimal rating;
@@ -12,24 +12,21 @@ public class RatingBoundary {
 	public RatingBoundary() {
 	}
 
-	public RatingBoundary(Long restaurantId, BigDecimal rating) {
-		this.restaurantId = restaurantId;
-		this.rating = rating;
-	}
-
 	public Long getRestaurantId() {
 		return restaurantId;
 	}
 
-	public void setRestaurantId(Long restaurantId) {
+	public RatingBoundary setRestaurantId(Long restaurantId) {
 		this.restaurantId = restaurantId;
+		return this;
 	}
 
 	public BigDecimal getRating() {
 		return rating;
 	}
 
-	public void setRating(BigDecimal rating) {
+	public RatingBoundary setRating(BigDecimal rating) {
 		this.rating = rating;
+		return this;
 	}
 }

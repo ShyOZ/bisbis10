@@ -36,8 +36,8 @@ public class DishesController {
 
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
 	@DeleteMapping(path = "/{id}/dishes/{dishId}")
-	public void deleteDish(@PathVariable("id") Long restaurantId, Long dishid) {
-		dishesService.deleteDish(restaurantId, dishid);
+	public void deleteDish(@PathVariable("id") Long restaurantId, @PathVariable Long dishId) {
+		dishesService.deleteDish(restaurantId, dishId);
 	}
 
 	@GetMapping(path = "/{id}/dishes")

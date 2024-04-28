@@ -3,14 +3,12 @@ package com.att.tdp.bisbis10.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.hamcrest.text.IsEmptyString.emptyOrNullString;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.LongStream;
 
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
@@ -24,44 +22,61 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.att.tdp.bisbis10.data.RestaurantEntity;
+import com.att.tdp.bisbis10.logic.dishes.DishBoundary;
 import com.att.tdp.bisbis10.logic.restaurants.RestaurantBoundary;
 import com.att.tdp.bisbis10.utility.ConfigureComplexTest;
 import com.att.tdp.bisbis10.utility.TestHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import jakarta.annotation.PostConstruct;
 
 @ConfigureComplexTest
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class TestRestaurants {
 	private @Autowired MockMvc mockMvc;
+	private RecursiveComparisonConfiguration restaurantBoundaryComparisonConfig;
+	private RecursiveComparisonConfiguration restaurantEntityComparisonConfig;
+
+	@PostConstruct
+	void init() {
+		restaurantBoundaryComparisonConfig = RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true)
+				.withIgnoreAllExpectedNullFields(true).build();
+		restaurantEntityComparisonConfig = RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true)
+				.withIgnoreAllExpectedNullFields(true).withIgnoredFields("cuisines.restaurants").build();
+	}
 
 	@Test
 	void testAddRestaurant(TestHelper helper) throws JsonProcessingException, Exception {
-		mockMvc.perform(
-				helper.requester.postRestaurant(new RestaurantBoundary(null, "restaurant", null, true, List.of())))
+		mockMvc.perform(helper.requester.postRestaurant(new RestaurantBoundary().setName("restaurant").setKosher(true)))
 				.andExpectAll(status().isCreated(), content().string(emptyOrNullString()));
 
 		long createdRestaurantId = 1l;
 
-		RestaurantEntity actualRestaurant = helper.restaurantRepository.findById(createdRestaurantId)
-				.orElseGet(() -> fail("failed to find restaurant with id %li / restaurant was not created properly!"
-						.formatted(createdRestaurantId)));
+		RestaurantEntity actualRestaurant = helper.restaurantsRepository.findById(createdRestaurantId).get();
 
-		RestaurantEntity expectedRestaurant = new RestaurantEntity(createdRestaurantId, "restaurant", null, true);
-		expectedRestaurant.setCuisines(Set.of());
+		RestaurantEntity expectedRestaurant = new RestaurantEntity().setId(createdRestaurantId).setName("restaurant")
+				.setKosher(true);
 
-		assertThat(actualRestaurant).usingRecursiveComparison().ignoringExpectedNullFields()
+		assertThat(actualRestaurant).usingRecursiveComparison(restaurantBoundaryComparisonConfig)
 				.isEqualTo(expectedRestaurant);
 	}
 
 	@Test
-	void testGetRestaurantWithNoDishes(TestHelper helper) throws Exception {
-		long createdRestaurantId = helper.restaurantRepository
-				.save(new RestaurantEntity(null, "restaurant", null, true)).getId();
+	void testGetRestaurant(TestHelper helper) throws JsonProcessingException, Exception {
+		long createdRestaurantId = helper.restaurantsRepository
+				.save(new RestaurantEntity().setName("restaurant").setKosher(true)).getId();
 
-		RestaurantBoundary expectedRestaurant = new RestaurantBoundary(createdRestaurantId, "restaurant", null, true,
-				List.of());
-		expectedRestaurant.setDishes(List.of());
+		List<DishBoundary> dishes = LongStream.of(1, 2, 3).mapToObj(
+				i -> new DishBoundary().setName("dish" + i).setDescription("dish number " + i).setPrice(10 * (int) i))
+				.toList();
+
+		for (DishBoundary d : dishes) {
+			mockMvc.perform(helper.requester.postDish(1l, d));
+		}
+
+		RestaurantBoundary expectedRestaurant = new RestaurantBoundary().setId(createdRestaurantId)
+				.setName("restaurant").setKosher(true).setDishes(dishes);
 
 		MvcResult result = mockMvc.perform(helper.requester.getRestaurant(createdRestaurantId))
 				.andExpect(status().isOk()).andReturn();
@@ -69,38 +84,33 @@ public class TestRestaurants {
 		RestaurantBoundary actualRestaurant = helper.mapper.readValue(result.getResponse().getContentAsString(),
 				RestaurantBoundary.class);
 
-		assertThat(actualRestaurant).usingRecursiveComparison().isEqualTo(expectedRestaurant);
+		assertThat(actualRestaurant).usingRecursiveComparison(restaurantBoundaryComparisonConfig)
+				.isEqualTo(expectedRestaurant);
 
 		mockMvc.perform(helper.requester.getRestaurant(createdRestaurantId + 1)).andExpect(status().isNotFound());
-
 	}
 
 	@Test
 	void testUpdateRestaurant(TestHelper helper) throws JsonProcessingException, Exception {
 		List<String> cuisines = List.of("a", "b", "c");
 
-		RestaurantBoundary original = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
-		mockMvc.perform(helper.requester.postRestaurant(original));
+		mockMvc.perform(helper.requester
+				.postRestaurant(new RestaurantBoundary().setName("restaurant").setKosher(true).setCuisines(cuisines)));
 
-		RestaurantBoundary update = new RestaurantBoundary(null, original.getName(), null, null,
-				List.of(cuisines.get(0)));
+		RestaurantBoundary update = new RestaurantBoundary().setCuisines(List.of(cuisines.get(0)));
 
 		long createdRestaurantId = 1l;
 
-		RestaurantEntity expectedUpdatedRestaurant = new RestaurantEntity(createdRestaurantId, "restaurant", null,
-				true);
-		expectedUpdatedRestaurant.setCuisines(helper.getCuisineSetFromNameList(List.of(cuisines.get(0))));
+		RestaurantEntity expectedUpdatedRestaurant = new RestaurantEntity().setId(createdRestaurantId)
+				.setName("restaurant").setKosher(true)
+				.setCuisines(helper.getCuisineSetFromNameList(List.of(cuisines.get(0))));
 
 		mockMvc.perform(helper.requester.putRestaurantUpdate(update, createdRestaurantId)).andExpectAll(status().isOk(),
 				content().string(emptyOrNullString()));
 
-		RestaurantEntity actualUpdatedRestaurant = helper.restaurantRepository.findById(createdRestaurantId)
-				.orElseGet(() -> fail("failed to find restaurant with id %li / restaurant was not created properly!"
-						.formatted(createdRestaurantId)));
+		RestaurantEntity actualUpdatedRestaurant = helper.restaurantsRepository.findById(createdRestaurantId).get();
 
-		assertThat(actualUpdatedRestaurant)
-				.usingRecursiveComparison(RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true)
-						.withIgnoredFields("cuisines.restaurants", "ratings").build())
+		assertThat(actualUpdatedRestaurant).usingRecursiveComparison(restaurantEntityComparisonConfig)
 				.isEqualTo(expectedUpdatedRestaurant);
 	}
 
@@ -109,40 +119,40 @@ public class TestRestaurants {
 
 		for (int i = 1; i <= 5; i++)
 			mockMvc.perform(helper.requester
-					.postRestaurant(new RestaurantBoundary(null, "restaurant" + i, null, true, List.of())));
+					.postRestaurant(new RestaurantBoundary().setName("restaurant" + i).setKosher(true)));
 
 		long toDelete = 4l;
 
 		mockMvc.perform(helper.requester.deleteRestaurant(toDelete)).andExpectAll(status().isNoContent(),
 				content().string(emptyOrNullString()));
 
-		List<RestaurantEntity> expectedRestaurantList = LongStream.of(1, 2, 3, 5).mapToObj(i -> {
-			RestaurantEntity rest = new RestaurantEntity(i, "restaurant" + i, null, true);
-			rest.setCuisines(Set.of());
-			return rest;
-		}).toList();
+		List<RestaurantEntity> expectedRestaurantList = LongStream.of(1, 2, 3, 5)
+				.mapToObj(i -> new RestaurantEntity().setId(i).setName("restaurant" + i).setKosher(true)).toList();
 
-		List<RestaurantEntity> actualRestaurantList = helper.restaurantRepository.findAll();
+		List<RestaurantEntity> actualRestaurantList = helper.restaurantsRepository.findAll();
 
-		assertThat(actualRestaurantList).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ratings")
+		assertThat(actualRestaurantList).usingRecursiveFieldByFieldElementComparator(restaurantEntityComparisonConfig)
 				.containsExactlyInAnyOrderElementsOf(expectedRestaurantList);
 	}
 
 	@Test
 	void testGetAllRestaurantsAndGetAllRestaurantsByCuisine(TestHelper helper)
 			throws JsonProcessingException, Exception {
-		List<String> cuisines = List.of("a", "b", "c");
-
-		RestaurantBoundary restABC = new RestaurantBoundary(1l, "restaurantABC", null, true, cuisines);
-
-		RestaurantBoundary restAC = new RestaurantBoundary(2l, "restaurantAC", null, true,
-				List.of(cuisines.get(0), cuisines.get(2)));
-
-		RestaurantBoundary restA = new RestaurantBoundary(3l, "restaurantA", null, true, List.of(cuisines.get(0)));
+		RestaurantBoundary restABC = new RestaurantBoundary().setName("restaurantABC").setKosher(true)
+				.setCuisines(List.of("a", "b", "c"));
+		RestaurantBoundary restAC = new RestaurantBoundary().setName("restaurantAC").setKosher(true)
+				.setCuisines(List.of("a", "c"));
+		RestaurantBoundary restA = new RestaurantBoundary().setName("restaurantA").setKosher(true)
+				.setCuisines(List.of("a"));
 
 		mockMvc.perform(helper.requester.postRestaurant(restABC));
+		restABC.setId(1l);
+
 		mockMvc.perform(helper.requester.postRestaurant(restAC));
+		restAC.setId(2l);
+
 		mockMvc.perform(helper.requester.postRestaurant(restA));
+		restA.setId(3l);
 
 		Map<MockHttpServletRequestBuilder, List<RestaurantBoundary>> requests = Map.ofEntries(
 				entry(helper.requester.getAllRestaurants(), List.of(restABC, restAC, restA)),
@@ -156,9 +166,7 @@ public class TestRestaurants {
 			RestaurantBoundary[] actualList = helper.mapper.readValue(result.getResponse().getContentAsString(),
 					RestaurantBoundary[].class);
 
-			assertThat(actualList)
-					.usingRecursiveFieldByFieldElementComparator(
-							RecursiveComparisonConfiguration.builder().withIgnoreCollectionOrder(true).build())
+			assertThat(actualList).usingRecursiveFieldByFieldElementComparator(restaurantBoundaryComparisonConfig)
 					.containsExactlyInAnyOrderElementsOf(entry.getValue());
 		}
 	}
@@ -167,25 +175,33 @@ public class TestRestaurants {
 	void testDeleteRestaurantDoesNotDeleteCuisines(TestHelper helper) throws JsonProcessingException, Exception {
 		List<String> cuisines = List.of("a", "b", "c");
 
-		RestaurantBoundary restaurant = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
+		RestaurantBoundary restaurant = new RestaurantBoundary().setName("restaurant").setKosher(true)
+				.setCuisines(cuisines);
 
 		mockMvc.perform(helper.requester.postRestaurant(restaurant));
 
-		helper.restaurantRepository.deleteAll();
+		helper.restaurantsRepository.deleteAll();
 
-		List<String> actualCuisines = helper.cuisineRepository.findAll().stream()
+		List<String> actualCuisines = helper.cuisinesRepository.findAll().stream()
 				.map(cuisineEntity -> cuisineEntity.getName()).toList();
 
 		assertThat(actualCuisines).containsExactlyInAnyOrderElementsOf(cuisines);
 	}
 
 	@Test
+	void testDeleteNonexistentRestaurantFailsSilently(TestHelper helper) throws JsonProcessingException, Exception {
+		mockMvc.perform(helper.requester.deleteRestaurant(1l)).andExpectAll(status().isNoContent(),
+				content().string(emptyOrNullString()));
+	}
+
+	@Test
 	void testAddRestaurantAlsoAddsCuisines(TestHelper helper) throws JsonProcessingException, Exception {
 		List<String> cuisines = List.of("a", "b", "c");
-		RestaurantBoundary restaurant = new RestaurantBoundary(null, "restaurant", null, true, cuisines);
+		RestaurantBoundary restaurant = new RestaurantBoundary().setName("restaurant").setKosher(true)
+				.setCuisines(cuisines);
 		mockMvc.perform(helper.requester.postRestaurant(restaurant));
 
-		List<String> actualCuisines = helper.cuisineRepository.findAll().stream()
+		List<String> actualCuisines = helper.cuisinesRepository.findAll().stream()
 				.map(cuisineEntity -> cuisineEntity.getName()).toList();
 
 		assertThat(actualCuisines).containsExactlyInAnyOrderElementsOf(cuisines);

@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.att.tdp.bisbis10.data.CuisineEntity;
 
-public interface CuisineRepository extends ListCrudRepository<CuisineEntity, Long> {
+public interface CuisinesRepository extends ListCrudRepository<CuisineEntity, Long> {
 	public Optional<CuisineEntity> findByNameIgnoreCase(@Param("name") String cuisineName);
 
 	public List<CuisineEntity> findAllByNameIgnoreCaseIn(@Param("names") List<String> cuisineNames);

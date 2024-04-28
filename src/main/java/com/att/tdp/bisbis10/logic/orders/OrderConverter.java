@@ -2,7 +2,9 @@ package com.att.tdp.bisbis10.logic.orders;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.att.tdp.bisbis10.data.OrderEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,7 +14,6 @@ import jakarta.annotation.PostConstruct;
 
 @Component
 public class OrderConverter {
-
 	private ObjectMapper mapper;
 
 	@PostConstruct
@@ -21,23 +22,15 @@ public class OrderConverter {
 	}
 
 	public OrderEntity toEntity(OrderBoundary boundary) {
-		OrderEntity entity = new OrderEntity();
-
 		try {
-			entity.setId(UUID.randomUUID().toString());
-			entity.setOrderInfo(mapper.writeValueAsString(boundary.getOrderItems()));
+			return new OrderEntity().setId(UUID.randomUUID())
+					.setOrderInfo(mapper.writeValueAsString(boundary.getOrderItems()));
 		} catch (JsonProcessingException e) {
-			throw new RuntimeException();
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Processing Error", e);
 		}
-
-		return entity;
 	}
 
 	public OrderBoundary toBoundary(OrderEntity entity) {
-		OrderBoundary boundary = new OrderBoundary();
-		boundary.setId(entity.getId());
-
-		return boundary;
+		return new OrderBoundary().setOrderId(entity.getId());
 	}
-
 }

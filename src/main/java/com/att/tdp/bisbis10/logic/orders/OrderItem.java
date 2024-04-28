@@ -2,12 +2,12 @@ package com.att.tdp.bisbis10.logic.orders;
 
 public class OrderItem {
 	private Long dishId;
-	private int amount;
+	private Integer amount;
 
 	public OrderItem() {
 	}
 
-	public OrderItem(Long dishId, int amount) {
+	public OrderItem(Long dishId, Integer amount) {
 		this.dishId = dishId;
 		this.amount = amount;
 	}
@@ -20,11 +20,11 @@ public class OrderItem {
 		this.dishId = dishId;
 	}
 
-	public int getAmount() {
+	public Integer getAmount() {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
+	public void setAmount(Integer amount) {
 		this.amount = amount;
 	}
 }

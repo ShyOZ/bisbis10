@@ -34,23 +34,26 @@ public class CuisineEntity {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public CuisineEntity setId(Long id) {
 		this.id = id;
+		return this;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public CuisineEntity setName(String name) {
 		this.name = name;
+		return this;
 	}
 
 	public Set<RestaurantEntity> getRestaurants() {
 		return restaurants;
 	}
 
-	public void setRestaurants(Set<RestaurantEntity> restaurants) {
+	public CuisineEntity setRestaurants(Set<RestaurantEntity> restaurants) {
 		this.restaurants = restaurants;
+		return this;
 	}
 }

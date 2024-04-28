@@ -12,35 +12,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.att.tdp.bisbis10.data.CuisineEntity;
-import com.att.tdp.bisbis10.repositories.CuisineRepository;
-import com.att.tdp.bisbis10.repositories.DishRepository;
-import com.att.tdp.bisbis10.repositories.OrderRepository;
-import com.att.tdp.bisbis10.repositories.RatingRepository;
-import com.att.tdp.bisbis10.repositories.RestaurantRepository;
+import com.att.tdp.bisbis10.repositories.CuisinesRepository;
+import com.att.tdp.bisbis10.repositories.DishesRepository;
+import com.att.tdp.bisbis10.repositories.OrdersRepository;
+import com.att.tdp.bisbis10.repositories.RatingsRepository;
+import com.att.tdp.bisbis10.repositories.RestaurantsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class TestHelper {
-	public final CuisineRepository cuisineRepository;
-	public final DishRepository dishRepository;
-	public final OrderRepository orderRepository;
-	public final RatingRepository ratingRepository;
-	public final RestaurantRepository restaurantRepository;
+	public final CuisinesRepository cuisinesRepository;
+	public final DishesRepository dishesRepository;
+	public final OrdersRepository ordersRepository;
+	public final RatingsRepository ratingsRepository;
+	public final RestaurantsRepository restaurantsRepository;
 
 	public final TestRequester requester;
 	private Statement statement;
 	public ObjectMapper mapper;
 
 	@Autowired
-	public TestHelper(CuisineRepository cuisineRepository, DishRepository dishRepository,
-			OrderRepository orderRepository, RatingRepository ratingRepository,
-			RestaurantRepository restaurantRepository, TestRequester requester) throws SQLException {
-		this.cuisineRepository = cuisineRepository;
-		this.dishRepository = dishRepository;
-		this.orderRepository = orderRepository;
-		this.ratingRepository = ratingRepository;
+	public TestHelper(CuisinesRepository cuisinesRepository, DishesRepository dishesRepository,
+			OrdersRepository ordersRepository, RatingsRepository ratingsRepository,
+			RestaurantsRepository restaurantsRepository, TestRequester requester) throws SQLException {
+		this.cuisinesRepository = cuisinesRepository;
+		this.dishesRepository = dishesRepository;
+		this.ordersRepository = ordersRepository;
+		this.ratingsRepository = ratingsRepository;
 		this.requester = requester;
-		this.restaurantRepository = restaurantRepository;
+		this.restaurantsRepository = restaurantsRepository;
 
 		Connection conn = DriverManager.getConnection("jdbc:h2:mem:test_db", "bisbis10", "bisbis10");
 		statement = conn.createStatement();
@@ -48,11 +48,11 @@ public class TestHelper {
 	}
 
 	public void reset() throws SQLException {
-		cuisineRepository.deleteAll();
-		dishRepository.deleteAll();
-		orderRepository.deleteAll();
-		ratingRepository.deleteAll();
-		restaurantRepository.deleteAll();
+		cuisinesRepository.deleteAll();
+		dishesRepository.deleteAll();
+		ordersRepository.deleteAll();
+		ratingsRepository.deleteAll();
+		restaurantsRepository.deleteAll();
 
 		statement.execute("ALTER SEQUENCE cuisines_seq RESTART with 1;");
 		statement.execute("ALTER SEQUENCE ratings_seq RESTART with 1;");
@@ -60,12 +60,8 @@ public class TestHelper {
 	}
 
 	public Set<CuisineEntity> getCuisineSetFromNameList(List<String> cuisines) {
-		return cuisines.stream().map(cuisine -> {
-			return cuisineRepository.findByNameIgnoreCase(cuisine).orElseGet(() -> {
-				CuisineEntity newCuisine = new CuisineEntity();
-				newCuisine.setName(cuisine);
-				return newCuisine;
-			});
+		return cuisines.stream().map(cuisineName -> {
+			return cuisinesRepository.findByNameIgnoreCase(cuisineName).orElse(new CuisineEntity().setName(cuisineName));
 		}).collect(Collectors.toSet());
 	}
 }

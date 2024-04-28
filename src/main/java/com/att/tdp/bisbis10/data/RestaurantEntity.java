@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,64 +26,97 @@ public class RestaurantEntity {
 
 	private BigDecimal averageRating;
 
-	@OneToMany(fetch = FetchType.EAGER, mappedBy = "restaurant", orphanRemoval = true)
+	@OneToMany(mappedBy = "restaurant", orphanRemoval = true, fetch = FetchType.EAGER)
 	private Set<RatingEntity> ratings;
 
-	@Column(name = "is_kosher") // for naming conventions
 	private Boolean isKosher;
 
-	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH,
-			CascadeType.REFRESH })
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH,
+			CascadeType.REFRESH }, fetch = FetchType.EAGER)
 	@JoinTable(name = "restaurant_cuisines", joinColumns = @JoinColumn(name = "restaurant_id"), inverseJoinColumns = @JoinColumn(name = "cuisine_id"))
 	private Set<CuisineEntity> cuisines;
 
-	public RestaurantEntity() {
-	}
+	@OneToMany(mappedBy = "restaurant", orphanRemoval = true, fetch = FetchType.EAGER)
+	private Set<DishEntity> dishes;
 
-	public RestaurantEntity(Long id, String name, BigDecimal rating, Boolean isKosher) {
-		this.id = id;
-		this.name = name;
-		this.averageRating = rating;
-		this.isKosher = isKosher;
+	private Long nextDishId = 1l;
+
+	public RestaurantEntity() {
 	}
 
 	public Long getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public RestaurantEntity setId(Long id) {
 		this.id = id;
+		return this;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public RestaurantEntity setName(String name) {
 		this.name = name;
+		return this;
 	}
 
 	public BigDecimal getAverageRating() {
 		return averageRating;
 	}
 
-	public void setAverageRating(BigDecimal averageRating) {
+	public RestaurantEntity setAverageRating(BigDecimal averageRating) {
 		this.averageRating = averageRating;
+		return this;
+	}
+
+	public Set<RatingEntity> getRatings() {
+		return ratings;
+	}
+
+	public RestaurantEntity setRatings(Set<RatingEntity> ratings) {
+		this.ratings = ratings;
+		return this;
 	}
 
 	public Boolean isKosher() {
 		return isKosher;
 	}
 
-	public void setKosher(Boolean isKosher) {
+	public RestaurantEntity setKosher(Boolean isKosher) {
 		this.isKosher = isKosher;
+		return this;
 	}
 
 	public Set<CuisineEntity> getCuisines() {
 		return cuisines;
 	}
 
-	public void setCuisines(Set<CuisineEntity> cuisines) {
+	public RestaurantEntity setCuisines(Set<CuisineEntity> cuisines) {
 		this.cuisines = cuisines;
+		return this;
+	}
+
+	public Set<DishEntity> getDishes() {
+		return dishes;
+	}
+
+	public RestaurantEntity setDishes(Set<DishEntity> dishes) {
+		this.dishes = dishes;
+		return this;
+	}
+
+	public Long getNextDishId() {
+		return nextDishId;
+	}
+
+	public RestaurantEntity setNextDishId(Long nextDishId) {
+		this.nextDishId = nextDishId;
+		return this;
+	}
+
+	public Long getAndIncrementNextDishId() {
+		return nextDishId++;
 	}
 }

@@ -29,23 +29,26 @@ public class RatingEntity {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public RatingEntity setId(Long id) {
 		this.id = id;
+		return this;
 	}
 
 	public RestaurantEntity getRestaurant() {
 		return restaurant;
 	}
 
-	public void setRestaurant(RestaurantEntity restaurant) {
+	public RatingEntity setRestaurant(RestaurantEntity restaurant) {
 		this.restaurant = restaurant;
+		return this;
 	}
 
 	public BigDecimal getRating() {
 		return rating;
 	}
 
-	public void setRating(BigDecimal rating) {
+	public RatingEntity setRating(BigDecimal rating) {
 		this.rating = rating;
+		return this;
 	}
 }

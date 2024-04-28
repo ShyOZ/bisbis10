@@ -1,41 +1,41 @@
 package com.att.tdp.bisbis10.data;
 
+import java.util.UUID;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "orders")
 public class OrderEntity {
 	@GeneratedValue(strategy = GenerationType.UUID)
-	private @Id String id;
+	private @Id UUID id;
 
-	private @Lob String orderInfo;
+	@Column(columnDefinition = "text")
+	private String orderInfo;
 
 	public OrderEntity() {
 	}
 
-	public OrderEntity(String id, String orderInfo) {
-		this.id = id;
-		this.orderInfo = orderInfo;
-	}
-
-	public String getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public OrderEntity setId(UUID id) {
 		this.id = id;
+		return this;
 	}
 
 	public String getOrderInfo() {
 		return orderInfo;
 	}
 
-	public void setOrderInfo(String orderInfo) {
+	public OrderEntity setOrderInfo(String orderInfo) {
 		this.orderInfo = orderInfo;
+		return this;
 	}
 }

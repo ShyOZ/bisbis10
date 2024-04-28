@@ -7,21 +7,12 @@ import com.att.tdp.bisbis10.data.DishEntity;
 @Component
 public class DishConverter {
 	public DishEntity toEntity(DishBoundary boundary) {
-		DishEntity entity = new DishEntity();
-		entity.setName(boundary.getName());
-		entity.setDescription(boundary.getDescription());
-		entity.setPrice(boundary.getPrice());
-
-		return entity;
+		return new DishEntity().setName(boundary.getName()).setDescription(boundary.getDescription())
+				.setPrice(boundary.getPrice());
 	}
 
 	public DishBoundary toBoundary(DishEntity entity) {
-		DishBoundary boundary = new DishBoundary();
-		boundary.setId(entity.getInternalDishId());
-		boundary.setName(entity.getName());
-		boundary.setDescription(entity.getDescription());
-		boundary.setPrice(entity.getPrice());
-
-		return boundary;
+		return new DishBoundary().setId(entity.getDishId()).setName(entity.getName())
+				.setDescription(entity.getDescription()).setPrice(entity.getPrice());
 	}
 }

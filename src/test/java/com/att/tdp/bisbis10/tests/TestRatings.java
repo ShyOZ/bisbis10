@@ -32,8 +32,8 @@ public class TestRatings {
 
 	@Test
 	void testAddRatingsToRestaurant(TestHelper helper) throws JsonProcessingException, Exception {
-		RestaurantEntity restaurant = new RestaurantEntity(null, "restaurant", null, false);
-		helper.restaurantRepository.save(restaurant);
+		RestaurantEntity restaurant = new RestaurantEntity().setName("restaurant").setKosher(false);
+		helper.restaurantsRepository.save(restaurant);
 
 		List<BigDecimal> reviews = IntStream.rangeClosed(1, 5).mapToObj(i -> BigDecimal.valueOf(i)).toList();
 		BigDecimal[] averageReviews = reviews.toArray(BigDecimal[]::new);
@@ -44,10 +44,11 @@ public class TestRatings {
 			averageReviews[i] = averageReviews[i].divide(BigDecimal.valueOf(i + 1));
 
 		for (int i = 0; i < reviews.size(); i++) {
-			mockMvc.perform(helper.requester.postRating(new RatingBoundary(1l, reviews.get(i))))
+			mockMvc.perform(
+					helper.requester.postRating(new RatingBoundary().setRestaurantId(1l).setRating(reviews.get(i))))
 					.andExpectAll(status().isOk(), content().string(emptyOrNullString()));
 
-			assertThat(helper.restaurantRepository.findById(1l).orElseThrow().getAverageRating())
+			assertThat(helper.restaurantsRepository.findById(1l).orElseThrow().getAverageRating())
 					.isEqualByComparingTo(averageReviews[i]);
 		}
 	}
@@ -55,28 +56,25 @@ public class TestRatings {
 	@Test
 	void testDeleteRestaurantAlsoDeletesRatings(TestHelper helper) {
 
-		final RestaurantEntity restaurant = helper.restaurantRepository
-				.save(new RestaurantEntity(null, "restaurant", null, false));
+		final RestaurantEntity restaurant = helper.restaurantsRepository
+				.save(new RestaurantEntity().setName("restaurant").setKosher(false));
 
-		IntStream.rangeClosed(1, 5).mapToObj(i -> BigDecimal.valueOf(i)).forEach(i -> {
-			RatingEntity rating = new RatingEntity();
-			rating.setRating(i);
-			rating.setRestaurant(restaurant);
+		IntStream.rangeClosed(1, 5)
+				.mapToObj(i -> new RatingEntity().setRating(BigDecimal.valueOf(i)).setRestaurant(restaurant))
+				.forEach(helper.ratingsRepository::save);
 
-			helper.ratingRepository.save(rating);
-		});
+		assertThat(helper.ratingsRepository.findAllByRestaurantId(1l)).hasSize(5);
 
-		assertThat(helper.ratingRepository.findAllByRestaurantId(1l)).hasSize(5);
+		helper.restaurantsRepository.deleteById(1l);
 
-		helper.restaurantRepository.deleteById(1l);
-
-		assertThat(helper.ratingRepository.findAllByRestaurantId(1l)).hasSize(0);
+		assertThat(helper.ratingsRepository.findAllByRestaurantId(1l)).hasSize(0);
 	}
 
 	@Test
-	void testAddingRatingToNonexistentRestaurantThrowsEntityNotfoundException(TestHelper helper)
+	void testAddingRatingToNonexistentRestaurantThrowsNotFoundException(TestHelper helper)
 			throws JsonProcessingException, Exception {
-		mockMvc.perform(helper.requester.postRating(new RatingBoundary(1l, BigDecimal.valueOf(12.3))))
+		mockMvc.perform(helper.requester
+				.postRating(new RatingBoundary().setRestaurantId(1l).setRating(BigDecimal.valueOf(12.3))))
 				.andExpect(status().isNotFound());
 	}
 }

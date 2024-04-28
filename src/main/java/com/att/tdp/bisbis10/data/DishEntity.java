@@ -1,71 +1,86 @@
 package com.att.tdp.bisbis10.data;
 
+import java.util.UUID;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@IdClass(DishId.class)
 @Table(name = "dishes")
 public class DishEntity {
-	private @Id Long internalDishId;
-	private @Id Long restaurantId;
+
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private @Id UUID id;
+
+	@ManyToOne
+	@JoinColumn(name = "restaurant_id")
+	private RestaurantEntity restaurant;
+
+	private Long dishId;
+
 	private String name;
 	private String description;
 	private Integer price;
 
 	public DishEntity() {
-
 	}
 
-	public DishEntity(Long internalDishId, Long restaurantId, String name, String description, Integer price) {
-		this();
-		this.internalDishId = internalDishId;
-		this.restaurantId = restaurantId;
-		this.name = name;
-		this.description = description;
-		this.price = price;
+	public UUID getId() {
+		return id;
 	}
 
-	public Long getInternalDishId() {
-		return internalDishId;
+	public DishEntity setId(UUID id) {
+		this.id = id;
+		return this;
 	}
 
-	public void setInternalDishId(Long internalDishId) {
-		this.internalDishId = internalDishId;
+	public RestaurantEntity getRestaurant() {
+		return restaurant;
 	}
 
-	public Long getRestaurantId() {
-		return restaurantId;
+	public DishEntity setRestaurant(RestaurantEntity restaurant) {
+		this.restaurant = restaurant;
+		return this;
 	}
 
-	public void setRestaurantId(Long restaurantId) {
-		this.restaurantId = restaurantId;
+	public Long getDishId() {
+		return dishId;
 	}
 
-	// getters and setters
+	public DishEntity setDishId(Long dishId) {
+		this.dishId = dishId;
+		return this;
+	}
+
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public DishEntity setName(String name) {
 		this.name = name;
+		return this;
 	}
 
 	public String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public DishEntity setDescription(String description) {
 		this.description = description;
+		return this;
 	}
 
 	public Integer getPrice() {
 		return price;
 	}
 
-	public void setPrice(Integer price) {
+	public DishEntity setPrice(Integer price) {
 		this.price = price;
+		return this;
 	}
 }
